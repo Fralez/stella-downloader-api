@@ -4,11 +4,11 @@ from .audiojack_service import AudioJack
 
 def download(data):
   # Song directory
-  if not os.path.exists('../songs'):
-    os.mkdir('../songs')
+  if not os.path.exists('../../../songs'):
+    os.mkdir('../../../songs')
 
   # Define the corresponding song path
-  songpath = '../songs/{}.mp3'.format(title)
+  songpath = '../../../songs/{}.mp3'.format(title)
 
   # If the file already exists, prevent from downloading it twice (ONLY works if the songs' titles are the same)
   if not os.path.isfile(songpath):
@@ -25,7 +25,7 @@ def download(data):
     }
     try:
       # Download the song and save in the songs path
-      audiojack.select(song_dict, path='../songs')
+      audiojack.select(song_dict, path='../../../songs')
     except Exception as err:
       response_object = {
         'status': 'fail',
