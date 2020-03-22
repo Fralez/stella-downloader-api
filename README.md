@@ -19,3 +19,6 @@ make clean
 # To run all commands at once
 make all
 ```
+
+## Credits
+This API uses Audiojack's smart YouTube to MP3 converter. If you'd like to contribute to the project go to https://github.com/Blue9/AudioJack.
