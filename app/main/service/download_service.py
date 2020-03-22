@@ -1,7 +1,6 @@
-
 import os
 
-from audiojack_service import AudioJack
+from .audiojack_service import AudioJack
 
 def download(data):
   # Song directory
@@ -18,11 +17,11 @@ def download(data):
     audiojack = AudioJack()
     # Create dictionary with the data given (dictionary structure according to audiojack module standard)
     song_dict = {
-      'url': data['ytUrl'],
-      'title': data['songTitle'],
+      'url': data['url'],
+      'title': data['title'],
       'artist': data['artist'],
       'album': data['album'],
-      'img': data['imgUrl']
+      'img': data['img']
     }
     try:
       # Download the song and save in the songs path
@@ -39,6 +38,3 @@ def download(data):
     'message': 'Song downloaded successfully.'
   }
   return response_object, 200
-
-# BASE URL:
-# http://127.0.0.1:5000/download?ytUrl=${data}&songTitle=${data}&artist=${data}&album=${data}&imgUrl=${data}

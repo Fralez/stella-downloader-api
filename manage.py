@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 from flask_script import Manager
 
 from app.main import create_app
+from app import blueprint
 
 load_dotenv()
 
 app = create_app(os.getenv('ENV_CONFIG') or 'dev')
+app.register_blueprint(blueprint)
 
 app.app_context().push()
 
