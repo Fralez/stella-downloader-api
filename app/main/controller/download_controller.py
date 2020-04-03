@@ -1,19 +1,19 @@
-from flask import request
+from flask import request, send_file
 from flask_restplus import Resource, Namespace
 
 from ..service.download_service import download
 
 api = Namespace('download', description='Download related operations')
 
-# FORMAT SAMPLE: http://127.0.0.1:5000/download?ytUrl=${data}&songTitle=${data}&artist=${data}&album=${data}&imgUrl=${data}
 @api.route('/')
-@api.param('?imgUrl', 'Cover image URL.')
-@api.param('?album', 'Song album.')
-@api.param('?artist', 'Song artist.')
-@api.param('?songTitle', 'Song title.')
-@api.param('?ytUrl', 'Youtube video URL.')
+@api.param('imgUrl', 'Cover image URL.')
+@api.param('album', 'Song album.')
+@api.param('artist', 'Song artist.')
+@api.param('songTitle', 'Song title.')
+@api.param('ytUrl', 'Youtube video URL.')
 @api.response(200, 'Song downloaded successfully.')
-@api.response(500, 'Error when downloading a song.')
+@api.response(400, 'Cover image URL extension is unsupported.')
+@api.response(404, 'Youtube (Media) URL is missing.')
 class Download(Resource):
 	@api.doc('Download a song in mp3 format from a Youtube link.')
 	def get(self):
@@ -26,7 +26,7 @@ class Download(Resource):
 			'img': request.args.get('imgUrl')
 		}
 		response = download(data)
-		if response['status'] is 'fail':
-			api.abort(404)
+		if response[0].get('status') is 'fail':
+			return response[0], response[1]
 		else:
-			return response
+			return send_file(response[0].get('songpath'), as_attachment=True)

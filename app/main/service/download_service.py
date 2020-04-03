@@ -4,37 +4,34 @@ from .audiojack_service import AudioJack
 
 def download(data):
   # Song directory
-  if not os.path.exists('../../../songs'):
-    os.mkdir('../../../songs')
+  media_folder = 'songs/'
 
-  # Define the corresponding song path
-  songpath = '../../../songs/{}.mp3'.format(title)
+  # Create AudioJack instance
+  audiojack = AudioJack()
+  # Create tags dictionary with the data given (dictionary structure according to audiojack module standard)
+  song_tags = {}
+  if data.get('url') != None: song_tags['url'] = data.get('url')
+  if data.get('title') != None: song_tags['title'] = data.get('title')
+  if data.get('artist') != None: song_tags['artist'] = data.get('artist')
+  if data.get('album') != None: song_tags['album'] = data.get('album')
+  if data.get('img') != None: song_tags['img'] = data.get('img')
 
-  # If the file already exists, prevent from downloading it twice (ONLY works if the songs' titles are the same)
-  if not os.path.isfile(songpath):
-
-    # Create AudioJack instance
-    audiojack = AudioJack()
-    # Create dictionary with the data given (dictionary structure according to audiojack module standard)
-    song_dict = {
-      'url': data['url'],
-      'title': data['title'],
-      'artist': data['artist'],
-      'album': data['album'],
-      'img': data['img']
+  try:
+    # Download the song and save in the songs path
+    songpath = audiojack.select(song_tags, path=media_folder)
+  except Exception as err:
+    response_object = {
+      'status': 'fail',
+      'message': str(err)
     }
-    try:
-      # Download the song and save in the songs path
-      audiojack.select(song_dict, path='../../../songs')
-    except Exception as err:
-      response_object = {
-        'status': 'fail',
-        'message': str(err)
-      }
-      return response_object, 500
+    # If err is 'Media URL must be specified', then it is a 404 error;
+    # else, it is an 'Unsupported file extension' in the cover art URL, then it is a 400 error.
+    status = 404 if str(err).__contains__('Media') else 400
+    return response_object, status
   
   response_object = {
     'status': 'success',
-    'message': 'Song downloaded successfully.'
+    'message': 'Song downloaded successfully.',
+    'songpath': songpath
   }
   return response_object, 200

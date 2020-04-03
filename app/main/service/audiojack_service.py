@@ -6,7 +6,9 @@ import re
 import socket
 import subprocess
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 from urllib.parse import urlparse
 
 import musicbrainzngs
@@ -46,14 +48,25 @@ class AudioJack(object):
         info = self.ydl.extract_info(entry['url'])
         file = '%s.mp3' % info['id']
         tags = ID3()
-        filename = entry['title'] if 'title' in entry and entry['title'] else 'download'
+        if 'title' in entry and entry['title']:
+            filename = entry['title']
+        elif info['title'] != None:
+            filename = info['title']
+        else:
+            filename = 'download'
         filename = re.sub(r'\W*[^a-zA-Z\d\s]\W*', '_', filename)
         if 'title' in entry:
             tags.add(TIT2(encoding=3, text=entry['title']))
+        else:
+            if info['title'] != None: tags.add(TIT2(encoding=3, text=info['title']))
         if 'artist' in entry:
             tags.add(TPE1(encoding=3, text=entry['artist']))
+        else:
+            if info['artist'] != None: tags.add(TPE1(encoding=3, text=info['artist']))
         if 'album' in entry:
             tags.add(TALB(encoding=3, text=entry['album']))
+        else:
+            if info['album'] != None: tags.add(TALB(encoding=3, text=info['album']))
         if 'img' in entry and entry['img'] != '':
             scheme = urlparse(entry['img']).scheme
             img_path = entry['img']
@@ -69,7 +82,27 @@ class AudioJack(object):
             valid_exts = ['jpeg', 'png', 'gif', 'bmp']
             ext = imghdr.what(None, img)
             if ext not in valid_exts:
-                raise ValueError('%s is an unsupported file extension.' % ext)
+                raise ValueError('%s is an unsupported cover image file extension.' % ext)
+            else:
+                mime = 'image/%s' % ext
+                tags.add(APIC(encoding=3, mime=mime, type=3, data=img))
+        elif info.get('thumbnails')[0].get('url') != None:
+            entry = info.get('thumbnails')[0].get('url')
+            scheme = urlparse(entry).scheme
+            img_path = entry
+            if scheme == '':
+                # Local path to absolute path
+                img_path = os.path.abspath(img_path)
+            if scheme[:4] != 'http':
+                # Absolute path to file URI
+                img_path = 'file:///%s' % img_path
+            img_request = urllib.request.urlopen(img_path)
+            img = img_request.read()
+            img_request.close()
+            valid_exts = ['jpeg', 'png', 'gif', 'bmp']
+            ext = imghdr.what(None, img)
+            if ext not in valid_exts:
+                raise ValueError('%s is an unsupported cover image file extension.' % ext)
             else:
                 mime = 'image/%s' % ext
                 tags.add(APIC(encoding=3, mime=mime, type=3, data=img))
@@ -113,16 +146,21 @@ class AudioJack(object):
             'url': info['webpage_url']
         }
 
-        banned_words = ['lyrics', 'hd', 'hq', 'free download', 'download', '1080p', 'official music video', 'm/v']
+        banned_words = ['lyrics', 'hd', 'hq', 'free download',
+                        'download', '1080p', 'official music video', 'm/v']
         feats = ['featuring', 'feat.', 'ft.', 'feat', 'ft']
         artist_delimiters = [',', 'x', '&', 'and']
 
         video_title = info['title']
-        video_title = re.sub(r'\([^)]*|\)|\[[^]]*|\]', '', video_title).strip()  # Remove parentheses and brackets
-        video_title = re.sub(self._gen_regex(banned_words), ' ', video_title).strip()  # Remove banned words
-        parsed_title = re.split(r'\W*[\-:] \W*', video_title)  # 'Artist - Title' => ['Artist', 'Title']
+        # Remove parentheses and brackets
+        video_title = re.sub(r'\([^)]*|\)|\[[^]]*|\]', '', video_title).strip()
+        video_title = re.sub(self._gen_regex(banned_words),
+                             ' ', video_title).strip()  # Remove banned words
+        # 'Artist - Title' => ['Artist', 'Title']
+        parsed_title = re.split(r'\W*[\-:] \W*', video_title)
 
-        title = self._split(parsed_title[-1], feats)  # 'Song feat. Some Guy' => ['Song', 'Some Guy']
+        # 'Song feat. Some Guy' => ['Song', 'Some Guy']
+        title = self._split(parsed_title[-1], feats)
         parsed['title'] = title[0]
         secondary_artist_list = title[1:]
 
@@ -130,14 +168,17 @@ class AudioJack(object):
             parsed['artists'] = [info['uploader'][:-8]]
 
         elif len(parsed_title) > 1:
-            artists = self._split(parsed_title[-2], feats)  # 'A1 and A2 feat. B1' => ['A1 and A2', 'B1']
-            parsed['artists'] = self._split(artists[0], artist_delimiters)  # 'A1 and A2' => ['A1', 'A2']
+            # 'A1 and A2 feat. B1' => ['A1 and A2', 'B1']
+            artists = self._split(parsed_title[-2], feats)
+            # 'A1 and A2' => ['A1', 'A2']
+            parsed['artists'] = self._split(artists[0], artist_delimiters)
             secondary_artist_list.extend(artists[1:])
 
         if len(secondary_artist_list) > 0:
             # Each string in the secondary_artist_list is split according to the artist delimiters.
             # Each of the newly created lists are then flattened into a single list (see self._flatten).
-            parsed['secondary_artists'] = self._multi_split(secondary_artist_list, artist_delimiters)
+            parsed['secondary_artists'] = self._multi_split(
+                secondary_artist_list, artist_delimiters)
         return parsed
 
     def _get_metadata(self, parsed):
@@ -152,10 +193,11 @@ class AudioJack(object):
             if 'release-list' in recording:
                 title = recording['title']
                 if ('artists' not in parsed or re.sub(r'\W', '', title.lower()) == re.sub(r'\W', '', parsed[
-                    'title'].lower())) and self._valid_title(title):
+                        'title'].lower())) and self._valid_title(title):
                     artists = [a['artist']['name'] for a in recording['artist-credit'] if
                                isinstance(a, dict) and 'artist' in a]
-                    artist = artists[0]  # Only use the first artist (may change in the future)
+                    # Only use the first artist (may change in the future)
+                    artist = artists[0]
                     for release in recording['release-list']:
                         album = release['title']
                         album_id = release['id']
@@ -186,7 +228,8 @@ class AudioJack(object):
         return self._flatten([self._split(item, delimiters) for item in lst])
 
     def _valid(self, release):
-        banned_words = ['instrumental', 'best of', 'diss', 'remix', 'what i call', 'ministry of sound']
+        banned_words = ['instrumental', 'best of', 'diss',
+                        'remix', 'what i call', 'ministry of sound']
         approved_secondary_types = ['soundtrack', 'remix', 'mixtape/street']
         for word in banned_words:
             if word in release['title'].lower():
@@ -216,7 +259,8 @@ class AudioJack(object):
                         musicbrainzngs.get_image_list(album_id)['images'][0]['thumbnails'][
                             'small']
                 else:
-                    self._cover_art_cache[album_id] = musicbrainzngs.get_image_list(album_id)['images'][0]['image']
+                    self._cover_art_cache[album_id] = musicbrainzngs.get_image_list(album_id)[
+                        'images'][0]['image']
                 return self._cover_art_cache[album_id]
         except musicbrainzngs.musicbrainz.ResponseError:
             return None
