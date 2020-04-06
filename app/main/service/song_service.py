@@ -24,14 +24,30 @@ def download(data):
       'status': 'fail',
       'message': str(err)
     }
-    # If err is 'Media URL must be specified', then it is a 404 error;
-    # else, it is an 'Unsupported file extension' in the cover art URL, then it is a 400 error.
-    status = 404 if str(err).__contains__('Media') else 400
+    # If err includes "unavailable", send 400; else send manually included error status
+    status = 400 if str(err).__contains__('unavailable') else int(str(err).split(" - ", 1)[0])
     return response_object, status
   
   response_object = {
     'status': 'success',
     'message': 'Song downloaded successfully.',
     'songpath': songpath
+  }
+  return response_object, 200
+
+def extract(url):
+  print("Extracting from %s..." % url)
+  response_object = {
+    'status': 'success',
+    'message': 'Info extracted successfully.',
+    'info': {
+      'url': url,
+      'title': '',
+      'artist': '',
+      'album': '',
+      'cover': '',
+      'duration': '',
+      'size': ''
+    }
   }
   return response_object, 200

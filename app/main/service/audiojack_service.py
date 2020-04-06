@@ -44,7 +44,7 @@ class AudioJack(object):
 
     def select(self, entry, path=None):
         if 'url' not in entry:
-            raise ValueError('Media URL must be specified.')
+            raise ValueError('404 - Media URL must be specified.')
         info = self.ydl.extract_info(entry['url'])
         file = '%s.mp3' % info['id']
         tags = ID3()
@@ -82,7 +82,7 @@ class AudioJack(object):
             valid_exts = ['jpeg', 'png', 'gif', 'bmp']
             ext = imghdr.what(None, img)
             if ext not in valid_exts:
-                raise ValueError('%s is an unsupported cover image file extension.' % ext)
+                raise ValueError('400 - %s is an unsupported cover image file extension.' % ext)
             else:
                 mime = 'image/%s' % ext
                 tags.add(APIC(encoding=3, mime=mime, type=3, data=img))
@@ -102,7 +102,7 @@ class AudioJack(object):
             valid_exts = ['jpeg', 'png', 'gif', 'bmp']
             ext = imghdr.what(None, img)
             if ext not in valid_exts:
-                raise ValueError('%s is an unsupported cover image file extension.' % ext)
+                raise ValueError('400 - %s is an unsupported cover image file extension.' % ext)
             else:
                 mime = 'image/%s' % ext
                 tags.add(APIC(encoding=3, mime=mime, type=3, data=img))

@@ -1,7 +1,7 @@
 from flask_restplus import Api
 from flask import Blueprint
 
-from .main.controller.download_controller import api as download_ns
+from .main.controller.song_controller import api as song_ns
 
 blueprint = Blueprint('api', __name__)
 
@@ -11,4 +11,4 @@ api = Api(blueprint,
           description='Flask RESTplus API for downloading and converting Youtube videos to mp3.'
           )
 
-api.add_namespace(download_ns, path='/download')
+api.add_namespace(song_ns, path='/song')
