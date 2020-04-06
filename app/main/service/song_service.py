@@ -36,18 +36,25 @@ def download(data):
   return response_object, 200
 
 def extract(url):
-  print("Extracting from %s..." % url)
+  # Info dictionary
+  info = {}
+  # Create AudioJack instance
+  audiojack = AudioJack()
+  # Get info from song's url
+  try:
+    info = audiojack.get_results(url)
+  except Exception as err:
+    response_object = {
+      'status': 'fail',
+      'message': str(err)
+    }
+    # If err includes "unavailable", send 400; else send manually included error status
+    status = 400 if str(err).__contains__('unavailable') else int(str(err).split(" - ", 1)[0])
+    return response_object, status
+
   response_object = {
     'status': 'success',
     'message': 'Info extracted successfully.',
-    'info': {
-      'url': url,
-      'title': '',
-      'artist': '',
-      'album': '',
-      'cover': '',
-      'duration': '',
-      'size': ''
-    }
+    'info': info
   }
   return response_object, 200

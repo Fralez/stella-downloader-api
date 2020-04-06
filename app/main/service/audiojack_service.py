@@ -37,10 +37,22 @@ class AudioJack(object):
         self._cover_art_cache = {}
 
     def get_results(self, url):
+        if not url:
+            raise ValueError('404 - Media URL must be specified.')
         info = self.ydl.extract_info(url, download=False)
         if 'entries' in info:
             info = info['entries'][0]
-        return self._get_metadata(self._parse(info))
+        result = {
+            'id': info['id'],
+            'url': url,
+            'title': info['title'],
+            'artist': info['artist'],
+            'album': info['album'],
+            'cover': info.get('thumbnails')[0].get('url'),
+            'duration': info['duration'],
+            'size': info['filesize'] * 2 # For some reason the filesize returned is the half of the real one
+        }
+        return result
 
     def select(self, entry, path=None):
         if 'url' not in entry:
