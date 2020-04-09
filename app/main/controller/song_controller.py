@@ -6,7 +6,7 @@ from ..service.song_service import download, extract
 api = Namespace('song', description='Song related operations')
 
 @api.route('/download')
-@api.param('imgUrl', 'Cover image URL.')
+@api.param('imgUrl', 'Cover image URL (.jpeg, .png, .gif or .bmp files).')
 @api.param('album', 'Song album.')
 @api.param('artist', 'Song artist.')
 @api.param('songTitle', 'Song title.')
