@@ -50,7 +50,7 @@ class AudioJack(object):
             'album': info['album'],
             'cover': info.get('thumbnails')[0].get('url'),
             'duration': info['duration'],
-            'size': info['filesize'] * 2 # For some reason the filesize returned is the half of the real one
+            'bytes_size': info['filesize'] * 2 # For some reason the filesize returned is the half of the real one
         }
         return result
 
