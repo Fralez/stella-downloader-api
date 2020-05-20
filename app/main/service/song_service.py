@@ -4,7 +4,7 @@ from .audiojack_service import AudioJack
 
 def download(data):
   # Song directory
-  media_folder = 'songs/'
+  media_folder = 'tmp/'
 
   # Create AudioJack instance
   audiojack = AudioJack()
