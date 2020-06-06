@@ -27,7 +27,7 @@ class Download(Resource):
 			'img': request.args.get('imgUrl')
 		}
 		response = download(data)
-		if response[0].get('status') is 'fail':
+		if response[0].get('status') == 'fail':
 			return response[0], response[1]
 		
 		return send_file(response[0].get('songpath'), as_attachment=True)
